@@ -5,19 +5,19 @@ local Players = cloneref(game:GetService('Players'))
 local Connections = {}
 local Config, Fetcher = {}, {}
 
-local Fluent = loadstring(game:HttpGet('https://raw.githubusercontent.com/enrithy/Amfer/refs/heads/main/library/util/interface.luau'))()
+local Fluent = loadstring(game:HttpGet('https://raw.githubusercontent.com/enrithy/UwU/refs/heads/main/library/util/interface.luau'))()
 
 local function save_config()
-    if not isfolder(`Amfer`) then
-        makefolder(`Amfer`)
+    if not isfolder(`UwU`) then
+        makefolder(`UwU`)
     end
 
-    if not isfolder(`Amfer/configs`) then
-        makefolder(`Amfer/configs`)
+    if not isfolder(`UwU/configs`) then
+        makefolder(`UwU/configs`)
     end
 
-    if not isfile(`Amfer/configs/{game.PlaceId}.json`) then
-        writefile(`Amfer/configs/{game.PlaceId}.json`, HttpService:JSONEncode({}))
+    if not isfile(`UwU/configs/{game.PlaceId}.json`) then
+        writefile(`UwU/configs/{game.PlaceId}.json`, HttpService:JSONEncode({}))
     end
 
     for index, value in pairs(Connections) do
@@ -25,17 +25,17 @@ local function save_config()
     end
 
     pcall(function()
-        writefile(`Amfer/configs/{game.PlaceId}.json`, HttpService:JSONEncode(Config))
+        writefile(`UwU/configs/{game.PlaceId}.json`, HttpService:JSONEncode(Config))
     end)
 end
 
 local function fetcher_config()
-    if not isfolder(`Amfer`) or not isfile(`Amfer/configs/{game.PlaceId}.json`) then
+    if not isfolder(`UwU`) or not isfile(`UwU/configs/{game.PlaceId}.json`) then
         save_config()
     end
 
     local success, data = pcall(function()
-        return HttpService:JSONDecode(readfile(`Amfer/configs/{game.PlaceId}.json`))
+        return HttpService:JSONDecode(readfile(`UwU/configs/{game.PlaceId}.json`))
     end)
 
     if success then
@@ -52,10 +52,10 @@ local function fetcher_config()
 end
 
 local Window = Fluent:CreateWindow({
-    Title = 'Amfer',
-    SubTitle = '',
+    Title = 'UwU',
+    SubTitle = '.gg/uwurbx',
     TabWidth = 107,
-    Size = UDim2.fromOffset(447, 322),
+    Size = UDim2.fromOffset(467, 346),
     Acrylic = false,
     Theme = 'Darker',
     MinimizeKey = Enum.KeyCode.End
@@ -162,73 +162,31 @@ local function create_signal(signal)
 
         dropdown.options = dropdown.options or {}
         dropdown.multi = dropdown.multi or false
-        dropdown.default = dropdown.default or (dropdown.multi and {} or dropdown.options[1])
+        dropdown.default = dropdown.default or 1
         dropdown.callback = dropdown.callback or (function() end)
 
-        if dropdown.multi then
-            if not fetcher_config()[dropdown.flag] and not Connections[dropdown.flag] then
-                Connections[dropdown.flag] = {}
+        if dropdown.multi and not fetcher_config()[dropdown.flag] and not Connections[dropdown.flag] then
+            Connections[dropdown.flag] = {}
 
-                for _, value in pairs(dropdown.options) do
-                    Connections[dropdown.flag][value] = false
-                end
+            for _, value in pairs(dropdown.options) do
+                Connections[dropdown.flag][value] = false
             end
-        else
-            if not fetcher_config()[dropdown.flag] and not Connections[dropdown.flag] then
-                Connections[dropdown.flag] = dropdown.default
-            end
+        elseif not fetcher_config()[dropdown.flag] and not Connections[dropdown.flag] then
+            Connections[dropdown.flag] = dropdown.default
         end
 
-        local fluent_dropdown = signal:AddDropdown(connection, {
+        dropdown.default = fetcher_config()[dropdown.flag] or Connections[dropdown.flag]
+        dropdown.callback = callback(dropdown.flag, dropdown.callback)
+
+        return signal:AddDropdown(connection, {
             Title = dropdown.title or '',
             Description = dropdown.description or '',
             Values = dropdown.options,
             Multi = dropdown.multi,
-            Default = dropdown.multi and {} or fetcher_config()[dropdown.flag] or Connections[dropdown.flag],
+            Default = dropdown.default,
             flag = dropdown.flag,
-            Callback = callback(dropdown.flag, dropdown.callback)
+            Callback = dropdown.callback
         })
-
-        function fluent_dropdown:update(value)
-            value = value or {}
-
-            local new_options = value.options or dropdown.options
-            local new_multi = value.multi ~= nil and value.multi or dropdown.multi
-            local new_default = value.default
-
-            dropdown.options = new_options
-            dropdown.multi = new_multi
-
-            if new_multi and type(Connections[dropdown.flag]) ~= 'table' then
-                Connections[dropdown.flag] = {}
-
-                for _, index in pairs(new_options) do
-                    Connections[dropdown.flag][index] = false
-                end
-            elseif not new_multi and type(Connections[dropdown.flag]) == 'table' then
-                Connections[dropdown.flag] = new_options[1] or ''
-            end
-
-            if new_default ~= nil then
-                if new_multi then
-                    if type(new_default) == 'table' then
-                        for property, index in pairs(new_default) do
-                            if table.find(new_options, property) then
-                                Connections[dropdown.flag][property] = index
-                            end
-                        end
-                    end
-                else
-                    Connections[dropdown.flag] = new_default
-                end
-
-                save_config()
-            end
-
-            fluent_dropdown:Refresh(new_options, new_multi)
-        end
-
-        return fluent_dropdown
     end
 
     function signal:create_slider(connection, slider)
